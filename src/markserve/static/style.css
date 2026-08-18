@@ -333,6 +333,35 @@ pre.mermaid {
   background: var(--pastel-blue);
 }
 
+.front-matter-wrapper {
+  margin: 0 0 1.5em;
+  background: var(--bg-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 0.2em 1em 1em;
+}
+
+.front-matter-wrapper summary {
+  cursor: pointer;
+  padding: 0.6em 0;
+  font-weight: bold;
+  color: var(--pastel-pink-strong);
+}
+
+.front-matter-wrapper table {
+  margin: 0.4em 0 0;
+}
+
+.front-matter th {
+  width: 12em;
+  white-space: nowrap;
+}
+
+.front-matter-nested {
+  box-shadow: none;
+  margin: 0;
+}
+
 .markdown-body img {
   max-width: 100%;
   border-radius: var(--radius-md);

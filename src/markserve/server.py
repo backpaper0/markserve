@@ -159,7 +159,17 @@ class Handler(BaseHTTPRequestHandler):
         if raw_mode:
             content = f'<div class="text-body"><pre>{html.escape(source)}</pre></div>'
         else:
-            content = f'<div class="markdown-body">{render.render_markdown(source)}</div>'
+            front_matter, body_source = render.split_front_matter(source)
+            html_parts = []
+            if front_matter:
+                html_parts.append(
+                    '<details class="front-matter-wrapper" open>'
+                    "<summary>Front matter</summary>"
+                    f"{render.render_front_matter_table(front_matter)}"
+                    "</details>"
+                )
+            html_parts.append(render.render_markdown(body_source))
+            content = f'<div class="markdown-body">{"".join(html_parts)}</div>'
 
         body = _render_page(
             title=file_path.name,

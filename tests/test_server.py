@@ -38,6 +38,32 @@ def test_markdown_preview(running_server):
         assert "<h1>Hello</h1>" in body
 
 
+def test_front_matter_rendered_as_table(running_server, tmp_path):
+    (tmp_path / "with_fm.md").write_text(
+        "---\ntitle: My Doc\ntags:\n  - a\n  - b\n---\n# Body\n",
+        encoding="utf-8",
+    )
+    host, port = running_server
+    with urllib.request.urlopen(f"http://{host}:{port}/with_fm.md") as resp:
+        body = resp.read().decode("utf-8")
+        assert '<table class="front-matter">' in body
+        assert "<th>title</th><td>My Doc</td>" in body
+        assert "<h1>Body</h1>" in body
+        assert "title: My Doc" not in body
+
+
+def test_front_matter_shown_raw_in_raw_mode(running_server, tmp_path):
+    (tmp_path / "with_fm.md").write_text(
+        "---\ntitle: My Doc\n---\n# Body\n",
+        encoding="utf-8",
+    )
+    host, port = running_server
+    with urllib.request.urlopen(f"http://{host}:{port}/with_fm.md?raw=1") as resp:
+        body = resp.read().decode("utf-8")
+        assert "title: My Doc" in body
+        assert '<table class="front-matter">' not in body
+
+
 def test_markdown_raw_source(running_server):
     host, port = running_server
     with urllib.request.urlopen(f"http://{host}:{port}/index.md?raw=1") as resp:
