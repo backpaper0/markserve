@@ -14,6 +14,9 @@ def running_server(tmp_path):
     (tmp_path / "index.md").write_text("# Hello\n", encoding="utf-8")
     (tmp_path / "image.png").write_bytes(b"\x89PNG\r\n\x1a\n" + b"0" * 10)
     (tmp_path / "notes.txt").write_text("plain text\n", encoding="utf-8")
+    sub = tmp_path / "sub"
+    sub.mkdir()
+    (sub / "README.md").write_text("# Sub\n", encoding="utf-8")
 
     handler_class = _make_handler_class(tmp_path)
     httpd = ThreadingHTTPServer(("127.0.0.1", 0), handler_class)
@@ -54,6 +57,35 @@ def test_plain_text_shown_as_source(running_server):
     with urllib.request.urlopen(f"http://{host}:{port}/notes.txt") as resp:
         body = resp.read().decode("utf-8")
         assert "plain text" in body
+
+
+def test_directory_index_raw_mode(running_server):
+    host, port = running_server
+    with urllib.request.urlopen(f"http://{host}:{port}/?raw=1") as resp:
+        body = resp.read().decode("utf-8")
+        assert "# Hello" in body
+        assert "<h1>" not in body
+
+
+def test_subdirectory_redirect_preserves_query(running_server):
+    host, port = running_server
+    conn = http.client.HTTPConnection(host, port)
+    try:
+        conn.request("GET", "/sub?raw=1")
+        resp = conn.getresponse()
+        assert resp.status == 301
+        assert resp.getheader("Location") == "/sub/?raw=1"
+        resp.read()
+    finally:
+        conn.close()
+
+
+def test_subdirectory_readme_raw_mode(running_server):
+    host, port = running_server
+    with urllib.request.urlopen(f"http://{host}:{port}/sub/?raw=1") as resp:
+        body = resp.read().decode("utf-8")
+        assert "# Sub" in body
+        assert "<h1>" not in body
 
 
 def test_path_traversal_is_forbidden(running_server):

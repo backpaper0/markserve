@@ -78,6 +78,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802 (BaseHTTPRequestHandler API)
         split = urlsplit(self.path)
         url_path = split.path
+        query_params = parse_qs(split.query)
+        raw_mode = query_params.get("raw", ["0"])[0] == "1"
 
         if url_path.startswith(STATIC_PREFIX):
             self._serve_static(url_path[len(STATIC_PREFIX) :])
@@ -91,17 +93,17 @@ class Handler(BaseHTTPRequestHandler):
 
         if resolved.is_dir():
             if not url_path.endswith("/"):
-                self._redirect(url_path + "/")
+                location = url_path + "/"
+                if split.query:
+                    location += "?" + split.query
+                self._redirect(location)
                 return
-            self._serve_directory(resolved)
+            self._serve_directory(resolved, raw_mode=raw_mode)
             return
 
         if not resolved.exists():
             self._send_error_page(HTTPStatus.NOT_FOUND, "ファイルが見つかりません。")
             return
-
-        query_params = parse_qs(split.query)
-        raw_mode = query_params.get("raw", ["0"])[0] == "1"
 
         if fsutil.is_markdown(resolved):
             self._serve_markdown(resolved, raw_mode=raw_mode)
@@ -110,11 +112,11 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self._serve_text_or_binary(resolved)
 
-    def _serve_directory(self, dir_path: Path) -> None:
+    def _serve_directory(self, dir_path: Path, *, raw_mode: bool = False) -> None:
         for name in ("index.md", "README.md"):
             candidate = dir_path / name
             if candidate.is_file():
-                self._serve_markdown(candidate, raw_mode=False)
+                self._serve_markdown(candidate, raw_mode=raw_mode)
                 return
         self._serve_dir_listing(dir_path)
 
