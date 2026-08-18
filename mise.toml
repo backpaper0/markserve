@@ -1,2 +1,6 @@
 [tools]
 uv = "latest"
+
+[tasks.dev]
+description = "examples/docsを対象にmarkserveを起動し、ブラウザで動作確認する"
+run = "uv run markserve examples/docs -p 8765 -o"

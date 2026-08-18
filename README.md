@@ -42,3 +42,5 @@ uv sync
 uv run pytest
 uv run markserve examples/docs -p 8765 -o
 ```
+
+`mise run dev` でも同じようにexamples/docsを対象にmarkserveを起動できます。
