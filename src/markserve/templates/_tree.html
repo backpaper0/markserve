@@ -1,0 +1,20 @@
+{% macro render_node(node) %}
+<ul class="tree-list">
+  {% for child in node.children %}
+    {% if child.is_truncated_marker %}
+      <li class="tree-truncated">{{ child.name }}</li>
+    {% elif child.is_dir %}
+      <li>
+        <details{% if child.is_open %} open{% endif %}>
+          <summary><span class="tree-icon">📁</span>{{ child.name }}</summary>
+          {{ render_node(child) }}
+        </details>
+      </li>
+    {% else %}
+      <li>
+        <a href="/{{ child.rel_path }}" class="tree-file{% if child.is_current %} tree-file--current{% endif %}"><span class="tree-icon">📄</span>{{ child.name }}</a>
+      </li>
+    {% endif %}
+  {% endfor %}
+</ul>
+{% endmacro %}
