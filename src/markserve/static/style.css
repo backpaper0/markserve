@@ -238,7 +238,7 @@ a:hover {
 
 .markdown-body,
 .text-body {
-  max-width: 760px;
+  max-width: 980px;
   margin: 0 auto;
   padding: 0.5rem 0.5rem 3rem;
 }
@@ -357,7 +357,7 @@ pre.mermaid {
 }
 
 .image-body {
-  max-width: 760px;
+  max-width: 980px;
   margin: 0 auto;
   padding: 0.5rem 0.5rem 3rem;
   text-align: center;
