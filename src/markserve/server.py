@@ -163,7 +163,7 @@ class Handler(BaseHTTPRequestHandler):
             html_parts = []
             if front_matter:
                 html_parts.append(
-                    '<details class="front-matter-wrapper" open>'
+                    '<details class="front-matter-wrapper">'
                     "<summary>Front matter</summary>"
                     f"{render.render_front_matter_table(front_matter)}"
                     "</details>"
