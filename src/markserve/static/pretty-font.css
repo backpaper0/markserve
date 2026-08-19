@@ -1,0 +1,13 @@
+body {
+  font-family: "UD Digi Kyokasho NP-R", "游教科書体", sans-serif;
+}
+
+.error-page {
+  font-family: "UD Digi Kyokasho NP-R", "游教科書体", sans-serif;
+}
+
+.markdown-body code,
+.markdown-body pre.highlight code,
+pre.highlight code {
+  font-family: "UD Digi Kyokasho N-R", "Osaka", monospace;
+}

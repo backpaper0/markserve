@@ -42,29 +42,6 @@ def _breadcrumbs(rel_path: str) -> list[dict]:
     return crumbs
 
 
-def _render_page(
-    *,
-    title: str,
-    breadcrumbs: list[dict],
-    tree_root: TreeNode,
-    tree_truncated: bool,
-    content: str,
-    is_markdown: bool = False,
-    raw_mode: bool = False,
-) -> bytes:
-    template = _env.get_template("layout.html")
-    out = template.render(
-        title=title,
-        breadcrumbs=breadcrumbs,
-        tree_root=tree_root,
-        tree_truncated=tree_truncated,
-        content=content,
-        is_markdown=is_markdown,
-        raw_mode=raw_mode,
-    )
-    return out.encode("utf-8")
-
-
 def _render_error(status: HTTPStatus, message: str) -> bytes:
     template = _env.get_template("error.html")
     out = template.render(status_code=int(status), message=message)
@@ -73,7 +50,34 @@ def _render_error(status: HTTPStatus, message: str) -> bytes:
 
 class Handler(BaseHTTPRequestHandler):
     root: Path
+    pretty_font: bool = False
+    custom_css_path: Path | None = None
     server_version = "markserve/0.1"
+
+    def _render_page(
+        self,
+        *,
+        title: str,
+        breadcrumbs: list[dict],
+        tree_root: TreeNode,
+        tree_truncated: bool,
+        content: str,
+        is_markdown: bool = False,
+        raw_mode: bool = False,
+    ) -> bytes:
+        template = _env.get_template("layout.html")
+        out = template.render(
+            title=title,
+            breadcrumbs=breadcrumbs,
+            tree_root=tree_root,
+            tree_truncated=tree_truncated,
+            content=content,
+            is_markdown=is_markdown,
+            raw_mode=raw_mode,
+            pretty_font=self.pretty_font,
+            custom_css=self.custom_css_path is not None,
+        )
+        return out.encode("utf-8")
 
     def do_GET(self) -> None:  # noqa: N802 (BaseHTTPRequestHandler API)
         split = urlsplit(self.path)
@@ -142,7 +146,7 @@ class Handler(BaseHTTPRequestHandler):
         listing = "".join(items) or "<li>(空のディレクトリです)</li>"
         content = f'<div class="text-body"><ul class="dir-listing">{listing}</ul></div>'
 
-        body = _render_page(
+        body = self._render_page(
             title=rel_path or "/",
             breadcrumbs=_breadcrumbs(rel_path),
             tree_root=tree_result.root,
@@ -171,7 +175,7 @@ class Handler(BaseHTTPRequestHandler):
             html_parts.append(render.render_markdown(body_source))
             content = f'<div class="markdown-body">{"".join(html_parts)}</div>'
 
-        body = _render_page(
+        body = self._render_page(
             title=file_path.name,
             breadcrumbs=_breadcrumbs(rel_path),
             tree_root=tree_result.root,
@@ -193,7 +197,7 @@ class Handler(BaseHTTPRequestHandler):
         text = data.decode("utf-8", errors="replace")
         content = f'<div class="text-body"><pre>{html.escape(text)}</pre></div>'
 
-        body = _render_page(
+        body = self._render_page(
             title=file_path.name,
             breadcrumbs=_breadcrumbs(rel_path),
             tree_root=tree_result.root,
@@ -210,6 +214,12 @@ class Handler(BaseHTTPRequestHandler):
         if name == "style.css":
             css = (_STATIC_DIR / "style.css").read_text(encoding="utf-8")
             css += "\n" + render.pygments_css() + "\n"
+            self._send_bytes(HTTPStatus.OK, css.encode("utf-8"), "text/css; charset=utf-8")
+        elif name == "pretty-font.css":
+            css = (_STATIC_DIR / "pretty-font.css").read_text(encoding="utf-8")
+            self._send_bytes(HTTPStatus.OK, css.encode("utf-8"), "text/css; charset=utf-8")
+        elif name == "custom.css" and self.custom_css_path is not None:
+            css = self.custom_css_path.read_text(encoding="utf-8")
             self._send_bytes(HTTPStatus.OK, css.encode("utf-8"), "text/css; charset=utf-8")
         else:
             self._send_error_page(HTTPStatus.NOT_FOUND, "ファイルが見つかりません。")
@@ -238,12 +248,27 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
 
-def _make_handler_class(root: Path) -> type[Handler]:
-    return type("BoundHandler", (Handler,), {"root": root})
+def _make_handler_class(
+    root: Path, *, pretty_font: bool = False, custom_css_path: Path | None = None
+) -> type[Handler]:
+    return type(
+        "BoundHandler",
+        (Handler,),
+        {"root": root, "pretty_font": pretty_font, "custom_css_path": custom_css_path},
+    )
 
 
-def serve(root: Path, host: str, port: int, open_browser: bool = False) -> None:
-    handler_class = _make_handler_class(root)
+def serve(
+    root: Path,
+    host: str,
+    port: int,
+    open_browser: bool = False,
+    pretty_font: bool = False,
+    custom_css_path: Path | None = None,
+) -> None:
+    handler_class = _make_handler_class(
+        root, pretty_font=pretty_font, custom_css_path=custom_css_path
+    )
     httpd = ThreadingHTTPServer((host, port), handler_class)
 
     if open_browser:
