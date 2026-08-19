@@ -8,9 +8,9 @@ authors = [
 requires-python = ">=3.14"
 dependencies = [
     "jinja2>=3.1.6",
-    "markdown-it-py>=4.2.0",
+    "markdown-it-py>=3.0.0",
     "pathspec>=0.12.1",
-    "pygments>=2.21.0",
+    "pygments>=2.18.0",
     "pyyaml>=6.0.3",
 ]
 
@@ -25,3 +25,7 @@ build-backend = "uv_build"
 dev = [
     "pytest>=9.1.1",
 ]
+
+[tool.uv]
+exclude-newer = "14 days"
+
