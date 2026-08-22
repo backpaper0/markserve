@@ -152,9 +152,11 @@ def running_server_with_base_url(tmp_path):
     thread.join()
 
 
-def test_base_url_serves_page_under_prefix(running_server_with_base_url):
+def test_base_url_serves_page_at_unprefixed_path(running_server_with_base_url):
+    # 前段のプロキシがprefixを取り除いてから転送する想定のため、
+    # markserve自身はbase_urlなしのパスでリクエストを受け取る。
     host, port = running_server_with_base_url
-    with urllib.request.urlopen(f"http://{host}:{port}/docs/index.md") as resp:
+    with urllib.request.urlopen(f"http://{host}:{port}/index.md") as resp:
         assert resp.status == 200
         body = resp.read().decode("utf-8")
         assert "<h1>Hello</h1>" in body
@@ -162,33 +164,26 @@ def test_base_url_serves_page_under_prefix(running_server_with_base_url):
 
 def test_base_url_prefixes_static_and_link_hrefs(running_server_with_base_url):
     host, port = running_server_with_base_url
-    with urllib.request.urlopen(f"http://{host}:{port}/docs/index.md") as resp:
+    with urllib.request.urlopen(f"http://{host}:{port}/index.md") as resp:
         body = resp.read().decode("utf-8")
         assert 'href="/docs/__markserve_static__/style.css"' in body
         assert 'href="/docs/"' in body
 
 
-def test_base_url_serves_static_css(running_server_with_base_url):
+def test_base_url_serves_static_css_at_unprefixed_path(running_server_with_base_url):
     host, port = running_server_with_base_url
-    with urllib.request.urlopen(f"http://{host}:{port}/docs/__markserve_static__/style.css") as resp:
+    with urllib.request.urlopen(f"http://{host}:{port}/__markserve_static__/style.css") as resp:
         assert resp.status == 200
 
 
-def test_base_url_root_without_trailing_slash_redirects(running_server_with_base_url):
+def test_base_url_directory_redirect_includes_prefix(running_server_with_base_url):
     host, port = running_server_with_base_url
     conn = http.client.HTTPConnection(host, port)
     try:
-        conn.request("GET", "/docs")
+        conn.request("GET", "/sub")
         resp = conn.getresponse()
         assert resp.status == 301
-        assert resp.getheader("Location") == "/docs/"
+        assert resp.getheader("Location") == "/docs/sub/"
         resp.read()
     finally:
         conn.close()
-
-
-def test_base_url_rejects_paths_outside_prefix(running_server_with_base_url):
-    host, port = running_server_with_base_url
-    with pytest.raises(urllib.error.HTTPError) as exc_info:
-        urllib.request.urlopen(f"http://{host}:{port}/index.md")
-    assert exc_info.value.code == 404

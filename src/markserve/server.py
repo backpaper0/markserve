@@ -88,15 +88,6 @@ class Handler(BaseHTTPRequestHandler):
         query_params = parse_qs(split.query)
         raw_mode = query_params.get("raw", ["0"])[0] == "1"
 
-        if self.base_url:
-            if url_path == self.base_url:
-                url_path = ""
-            elif url_path.startswith(self.base_url + "/"):
-                url_path = url_path[len(self.base_url) :]
-            else:
-                self._send_error_page(HTTPStatus.NOT_FOUND, "ページが見つかりません。")
-                return
-
         if url_path.startswith(STATIC_PREFIX):
             self._serve_static(url_path[len(STATIC_PREFIX) :])
             return

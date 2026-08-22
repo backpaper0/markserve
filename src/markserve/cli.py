@@ -56,7 +56,9 @@ def _build_parser() -> argparse.ArgumentParser:
         metavar="PATH",
         default=None,
         help="リバースプロキシ配下などサブパスで公開する場合のベースURL（例: /docs）。"
-        "指定するとリンクやCSSファイルの読み込みにも使用する",
+        "プロキシ側でこのパスを取り除いてから転送する構成を想定しており、"
+        "markserve自身はprefixなしのパスでリクエストを受け取る。"
+        "指定するとレンダリング結果のリンクやCSSファイルの読み込みURLにこのパスを付与する",
     )
     parser.add_argument(
         "--show-hidden",
