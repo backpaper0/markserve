@@ -42,6 +42,14 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="指定したCSSファイルでデザイン（フォントなど）を上書きする",
     )
+    parser.add_argument(
+        "--show-hidden",
+        dest="show_hidden",
+        action="append",
+        metavar="NAME",
+        default=None,
+        help="ドット始まりでも表示対象に含める名前（階層を問わず一致。複数指定可）",
+    )
     parser.add_argument("--version", action="version", version=f"markserve {__version__}")
     return parser
 
@@ -73,6 +81,7 @@ def main(argv: list[str] | None = None) -> int:
         open_browser=args.open_browser,
         pretty_font=args.pretty_font,
         custom_css_path=custom_css_path,
+        show_hidden=frozenset(args.show_hidden or ()),
     )
     return 0
 

@@ -52,6 +52,7 @@ class Handler(BaseHTTPRequestHandler):
     root: Path
     pretty_font: bool = False
     custom_css_path: Path | None = None
+    show_hidden: frozenset[str] = frozenset()
     server_version = "markserve/0.1"
 
     def _render_page(
@@ -126,11 +127,15 @@ class Handler(BaseHTTPRequestHandler):
 
     def _serve_dir_listing(self, dir_path: Path) -> None:
         rel_path = _rel_path(self.root, dir_path)
-        tree_result = build_tree(self.root, current_rel_path=rel_path)
+        tree_result = build_tree(self.root, current_rel_path=rel_path, show_hidden=self.show_hidden)
 
         try:
             entries = sorted(
-                (e for e in dir_path.iterdir() if not e.name.startswith(".")),
+                (
+                    e
+                    for e in dir_path.iterdir()
+                    if not e.name.startswith(".") or e.name in self.show_hidden
+                ),
                 key=lambda e: (not e.is_dir(), e.name.lower()),
             )
         except OSError:
@@ -158,7 +163,7 @@ class Handler(BaseHTTPRequestHandler):
     def _serve_markdown(self, file_path: Path, *, raw_mode: bool) -> None:
         rel_path = _rel_path(self.root, file_path)
         source = file_path.read_text(encoding="utf-8", errors="replace")
-        tree_result = build_tree(self.root, current_rel_path=rel_path)
+        tree_result = build_tree(self.root, current_rel_path=rel_path, show_hidden=self.show_hidden)
 
         if raw_mode:
             content = f'<div class="text-body"><pre>{html.escape(source)}</pre></div>'
@@ -193,7 +198,7 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         rel_path = _rel_path(self.root, file_path)
-        tree_result = build_tree(self.root, current_rel_path=rel_path)
+        tree_result = build_tree(self.root, current_rel_path=rel_path, show_hidden=self.show_hidden)
         text = data.decode("utf-8", errors="replace")
         content = f'<div class="text-body"><pre>{html.escape(text)}</pre></div>'
 
@@ -249,12 +254,21 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def _make_handler_class(
-    root: Path, *, pretty_font: bool = False, custom_css_path: Path | None = None
+    root: Path,
+    *,
+    pretty_font: bool = False,
+    custom_css_path: Path | None = None,
+    show_hidden: frozenset[str] = frozenset(),
 ) -> type[Handler]:
     return type(
         "BoundHandler",
         (Handler,),
-        {"root": root, "pretty_font": pretty_font, "custom_css_path": custom_css_path},
+        {
+            "root": root,
+            "pretty_font": pretty_font,
+            "custom_css_path": custom_css_path,
+            "show_hidden": show_hidden,
+        },
     )
 
 
@@ -265,9 +279,10 @@ def serve(
     open_browser: bool = False,
     pretty_font: bool = False,
     custom_css_path: Path | None = None,
+    show_hidden: frozenset[str] = frozenset(),
 ) -> None:
     handler_class = _make_handler_class(
-        root, pretty_font=pretty_font, custom_css_path=custom_css_path
+        root, pretty_font=pretty_font, custom_css_path=custom_css_path, show_hidden=show_hidden
     )
     httpd = ThreadingHTTPServer((host, port), handler_class)
 

@@ -40,6 +40,7 @@ def build_tree(
     max_entries_per_dir: int = MAX_ENTRIES_PER_DIR,
     max_total_nodes: int = MAX_TOTAL_NODES,
     respect_gitignore: bool = True,
+    show_hidden: frozenset[str] = frozenset(),
 ) -> TreeResult:
     """rootディレクトリ配下のファイルツリーを構築する。
 
@@ -49,12 +50,16 @@ def build_tree(
     ディレクトリの展開は幅優先(BFS)で行う。ツリー全体のノード総数上限
     (max_total_nodes)に達した場合でも、浅い階層は既に展開済みのため、
     一部のディレクトリだけが丸ごと表示から消えることがない。
+
+    show_hidden には、ドット始まりでも表示対象に含める名前を指定する。
+    階層を問わず、この集合に含まれる名前のエントリはドット除外の対象外になる。
     """
     current_parts = _split(current_rel_path)
     state = _WalkState(
         max_entries_per_dir=max_entries_per_dir,
         max_total_nodes=max_total_nodes,
         respect_gitignore=respect_gitignore,
+        show_hidden=show_hidden,
     )
 
     root_node = TreeNode(name=root.name or str(root), rel_path="", is_dir=True, is_open=True)
@@ -78,6 +83,7 @@ class _WalkState:
     max_entries_per_dir: int
     max_total_nodes: int
     respect_gitignore: bool = True
+    show_hidden: frozenset[str] = field(default_factory=frozenset)
     node_count: int = 0
     truncated: bool = False
 
@@ -152,7 +158,11 @@ def _expand(item: _QueueItem, queue: deque[_QueueItem], state: _WalkState) -> No
         return
 
     try:
-        entries = [e for e in os.scandir(item.dir_path) if not e.name.startswith(".")]
+        entries = [
+            e
+            for e in os.scandir(item.dir_path)
+            if not e.name.startswith(".") or e.name in state.show_hidden
+        ]
     except OSError:
         return
 

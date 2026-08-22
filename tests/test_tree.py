@@ -22,6 +22,21 @@ def test_dotfiles_are_excluded(tmp_path):
     assert names == ["visible.md"]
 
 
+def test_show_hidden_includes_named_entries_only(tmp_path):
+    (tmp_path / ".hidden").write_text("x", encoding="utf-8")
+    (tmp_path / ".notes").mkdir()
+    (tmp_path / ".notes" / "todo.md").write_text("x", encoding="utf-8")
+    (tmp_path / "visible.md").write_text("x", encoding="utf-8")
+
+    result = build_tree(tmp_path, show_hidden=frozenset({".notes"}))
+
+    names = [c.name for c in result.root.children]
+    assert names == [".notes", "visible.md"]
+
+    notes_node = next(c for c in result.root.children if c.name == ".notes")
+    assert [c.name for c in notes_node.children] == ["todo.md"]
+
+
 def test_current_file_ancestors_are_open(tmp_path):
     guide = tmp_path / "guide"
     guide.mkdir()
