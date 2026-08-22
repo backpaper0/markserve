@@ -18,6 +18,14 @@ def _normalize_base_url(value: str) -> str:
     return "" if path == "/" else path
 
 
+def _resolve_base_url(base_url: str | None, code_server: bool, port: int) -> str:
+    if code_server:
+        return f"/proxy/{port}"
+    if base_url:
+        return _normalize_base_url(base_url)
+    return ""
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="markserve",
@@ -50,7 +58,8 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="指定したCSSファイルでデザイン（フォントなど）を上書きする",
     )
-    parser.add_argument(
+    base_url_group = parser.add_mutually_exclusive_group()
+    base_url_group.add_argument(
         "--base-url",
         dest="base_url",
         metavar="PATH",
@@ -59,6 +68,13 @@ def _build_parser() -> argparse.ArgumentParser:
         "プロキシ側でこのパスを取り除いてから転送する構成を想定しており、"
         "markserve自身はprefixなしのパスでリクエストを受け取る。"
         "指定するとレンダリング結果のリンクやCSSファイルの読み込みURLにこのパスを付与する",
+    )
+    base_url_group.add_argument(
+        "--code-server",
+        dest="code_server",
+        action="store_true",
+        help="code-serverのポートフォワーディング（/proxy/<port>）配下での実行に合わせて"
+        "--base-url /proxy/<port>を自動設定する",
     )
     parser.add_argument(
         "--show-hidden",
@@ -92,6 +108,8 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         custom_css_path = custom_css_path.resolve(strict=True)
 
+    base_url = _resolve_base_url(args.base_url, args.code_server, args.port)
+
     serve(
         root.resolve(strict=True),
         args.host,
@@ -100,7 +118,7 @@ def main(argv: list[str] | None = None) -> int:
         pretty_font=args.pretty_font,
         custom_css_path=custom_css_path,
         show_hidden=frozenset(args.show_hidden or ()),
-        base_url=_normalize_base_url(args.base_url) if args.base_url else "",
+        base_url=base_url,
     )
     return 0
 

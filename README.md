@@ -22,7 +22,8 @@ uv tool install markserve
 
 ```sh
 markserve [DIRECTORY] [-p/--port PORT] [-H/--host HOST] [-o/--open] \
-  [-f/--pretty-font] [--css PATH] [--show-hidden NAME] [--base-url PATH] [--version]
+  [-f/--pretty-font] [--css PATH] [--show-hidden NAME] \
+  [--base-url PATH | --code-server] [--version]
 ```
 
 - `DIRECTORY`: プレビュー対象のルートディレクトリ（省略時はカレントディレクトリ）
@@ -33,6 +34,7 @@ markserve [DIRECTORY] [-p/--port PORT] [-H/--host HOST] [-o/--open] \
 - `--css PATH`: 指定したCSSファイルでデザイン（フォントなど）を上書きする
 - `--show-hidden NAME`: ドット始まりでも表示対象に含める名前を指定する（階層を問わず一致。複数指定可）
 - `--base-url PATH`: リバースプロキシ配下などサブパスで公開する場合のベースURL（例: `/docs`）。プロキシ側でこのパスを取り除いてから転送する構成を想定しており、markserve自身はprefixなしのパスでリクエストを受け取る。指定するとレンダリング結果のページ内のリンクやCSSファイルの読み込みURLにこのパスを付与する
+- `--code-server`: code-serverのポートフォワーディング（`/proxy/<port>`）配下での実行に合わせて`--base-url /proxy/<port>`を自動設定する（`--base-url`とは併用不可）
 
 例:
 
