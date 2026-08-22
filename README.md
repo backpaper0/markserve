@@ -21,13 +21,17 @@ uv tool install markserve
 ## 使い方
 
 ```sh
-markserve [DIRECTORY] [-p/--port PORT] [-H/--host HOST] [-o/--open] [--version]
+markserve [DIRECTORY] [-p/--port PORT] [-H/--host HOST] [-o/--open] \
+  [-f/--pretty-font] [--css PATH] [--show-hidden NAME] [--version]
 ```
 
 - `DIRECTORY`: プレビュー対象のルートディレクトリ（省略時はカレントディレクトリ）
 - `-p`, `--port`: 待ち受けポート（既定: `8000`）
 - `-H`, `--host`: 待ち受けホスト（既定: `127.0.0.1`）
 - `-o`, `--open`: 起動後にブラウザを自動で開く
+- `-f`, `--pretty-font`: 読みやすさ重視のフォント（Windows: UD デジタル教科書体 / macOS: 游教科書体・Osaka）を使用する
+- `--css PATH`: 指定したCSSファイルでデザイン（フォントなど）を上書きする
+- `--show-hidden NAME`: ドット始まりでも表示対象に含める名前を指定する（階層を問わず一致。複数指定可）
 
 例:
 
