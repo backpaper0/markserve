@@ -42,9 +42,9 @@ def _breadcrumbs(rel_path: str) -> list[dict]:
     return crumbs
 
 
-def _render_error(status: HTTPStatus, message: str) -> bytes:
+def _render_error(status: HTTPStatus, message: str, base_url: str = "") -> bytes:
     template = _env.get_template("error.html")
-    out = template.render(status_code=int(status), message=message)
+    out = template.render(status_code=int(status), message=message, base_url=base_url)
     return out.encode("utf-8")
 
 
@@ -53,6 +53,7 @@ class Handler(BaseHTTPRequestHandler):
     pretty_font: bool = False
     custom_css_path: Path | None = None
     show_hidden: frozenset[str] = frozenset()
+    base_url: str = ""
     server_version = "markserve/0.1"
 
     def _render_page(
@@ -77,6 +78,7 @@ class Handler(BaseHTTPRequestHandler):
             raw_mode=raw_mode,
             pretty_font=self.pretty_font,
             custom_css=self.custom_css_path is not None,
+            base_url=self.base_url,
         )
         return out.encode("utf-8")
 
@@ -85,6 +87,15 @@ class Handler(BaseHTTPRequestHandler):
         url_path = split.path
         query_params = parse_qs(split.query)
         raw_mode = query_params.get("raw", ["0"])[0] == "1"
+
+        if self.base_url:
+            if url_path == self.base_url:
+                url_path = ""
+            elif url_path.startswith(self.base_url + "/"):
+                url_path = url_path[len(self.base_url) :]
+            else:
+                self._send_error_page(HTTPStatus.NOT_FOUND, "ページが見つかりません。")
+                return
 
         if url_path.startswith(STATIC_PREFIX):
             self._serve_static(url_path[len(STATIC_PREFIX) :])
@@ -244,11 +255,11 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def _send_error_page(self, status: HTTPStatus, message: str) -> None:
-        self._send_html(status, _render_error(status, message))
+        self._send_html(status, _render_error(status, message, base_url=self.base_url))
 
     def _redirect(self, location: str) -> None:
         self.send_response(HTTPStatus.MOVED_PERMANENTLY)
-        self.send_header("Location", location)
+        self.send_header("Location", self.base_url + location)
         self.send_header("Content-Length", "0")
         self.end_headers()
 
@@ -259,6 +270,7 @@ def _make_handler_class(
     pretty_font: bool = False,
     custom_css_path: Path | None = None,
     show_hidden: frozenset[str] = frozenset(),
+    base_url: str = "",
 ) -> type[Handler]:
     return type(
         "BoundHandler",
@@ -268,6 +280,7 @@ def _make_handler_class(
             "pretty_font": pretty_font,
             "custom_css_path": custom_css_path,
             "show_hidden": show_hidden,
+            "base_url": base_url,
         },
     )
 
@@ -280,17 +293,22 @@ def serve(
     pretty_font: bool = False,
     custom_css_path: Path | None = None,
     show_hidden: frozenset[str] = frozenset(),
+    base_url: str = "",
 ) -> None:
     handler_class = _make_handler_class(
-        root, pretty_font=pretty_font, custom_css_path=custom_css_path, show_hidden=show_hidden
+        root,
+        pretty_font=pretty_font,
+        custom_css_path=custom_css_path,
+        show_hidden=show_hidden,
+        base_url=base_url,
     )
     httpd = ThreadingHTTPServer((host, port), handler_class)
 
     if open_browser:
-        url = f"http://{host}:{port}/"
+        url = f"http://{host}:{port}{base_url}/"
         threading.Timer(0.3, webbrowser.open, args=(url,)).start()
 
-    print(f"markserve: serving {root} at http://{host}:{port}/")
+    print(f"markserve: serving {root} at http://{host}:{port}{base_url}/")
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

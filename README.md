@@ -22,7 +22,7 @@ uv tool install markserve
 
 ```sh
 markserve [DIRECTORY] [-p/--port PORT] [-H/--host HOST] [-o/--open] \
-  [-f/--pretty-font] [--css PATH] [--show-hidden NAME] [--version]
+  [-f/--pretty-font] [--css PATH] [--show-hidden NAME] [--base-url PATH] [--version]
 ```
 
 - `DIRECTORY`: プレビュー対象のルートディレクトリ（省略時はカレントディレクトリ）
@@ -32,6 +32,7 @@ markserve [DIRECTORY] [-p/--port PORT] [-H/--host HOST] [-o/--open] \
 - `-f`, `--pretty-font`: 読みやすさ重視のフォント（Windows: UD デジタル教科書体 / macOS: 游教科書体・Osaka）を使用する
 - `--css PATH`: 指定したCSSファイルでデザイン（フォントなど）を上書きする
 - `--show-hidden NAME`: ドット始まりでも表示対象に含める名前を指定する（階層を問わず一致。複数指定可）
+- `--base-url PATH`: リバースプロキシ配下などサブパスで公開する場合のベースURL（例: `/docs`）。指定するとページ内のリンクやCSSファイルの読み込みにもこのパスを付与する
 
 例:
 

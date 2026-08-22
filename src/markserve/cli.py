@@ -5,9 +5,17 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from . import __version__
 from .server import serve
+
+
+def _normalize_base_url(value: str) -> str:
+    """ベースURLを先頭スラッシュ付き・末尾スラッシュなしの形式へ正規化する。"""
+    path = urlsplit(value).path
+    path = "/" + path.strip("/")
+    return "" if path == "/" else path
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -41,6 +49,14 @@ def _build_parser() -> argparse.ArgumentParser:
         metavar="PATH",
         default=None,
         help="指定したCSSファイルでデザイン（フォントなど）を上書きする",
+    )
+    parser.add_argument(
+        "--base-url",
+        dest="base_url",
+        metavar="PATH",
+        default=None,
+        help="リバースプロキシ配下などサブパスで公開する場合のベースURL（例: /docs）。"
+        "指定するとリンクやCSSファイルの読み込みにも使用する",
     )
     parser.add_argument(
         "--show-hidden",
@@ -82,6 +98,7 @@ def main(argv: list[str] | None = None) -> int:
         pretty_font=args.pretty_font,
         custom_css_path=custom_css_path,
         show_hidden=frozenset(args.show_hidden or ()),
+        base_url=_normalize_base_url(args.base_url) if args.base_url else "",
     )
     return 0
 

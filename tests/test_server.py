@@ -131,3 +131,64 @@ def test_missing_file_is_not_found(running_server):
     with pytest.raises(urllib.error.HTTPError) as exc_info:
         urllib.request.urlopen(f"http://{host}:{port}/missing.md")
     assert exc_info.value.code == 404
+
+
+@pytest.fixture
+def running_server_with_base_url(tmp_path):
+    (tmp_path / "index.md").write_text("# Hello\n", encoding="utf-8")
+    sub = tmp_path / "sub"
+    sub.mkdir()
+    (sub / "README.md").write_text("# Sub\n", encoding="utf-8")
+
+    handler_class = _make_handler_class(tmp_path, base_url="/docs")
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), handler_class)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    port = httpd.server_address[1]
+
+    yield "127.0.0.1", port
+
+    httpd.shutdown()
+    thread.join()
+
+
+def test_base_url_serves_page_under_prefix(running_server_with_base_url):
+    host, port = running_server_with_base_url
+    with urllib.request.urlopen(f"http://{host}:{port}/docs/index.md") as resp:
+        assert resp.status == 200
+        body = resp.read().decode("utf-8")
+        assert "<h1>Hello</h1>" in body
+
+
+def test_base_url_prefixes_static_and_link_hrefs(running_server_with_base_url):
+    host, port = running_server_with_base_url
+    with urllib.request.urlopen(f"http://{host}:{port}/docs/index.md") as resp:
+        body = resp.read().decode("utf-8")
+        assert 'href="/docs/__markserve_static__/style.css"' in body
+        assert 'href="/docs/"' in body
+
+
+def test_base_url_serves_static_css(running_server_with_base_url):
+    host, port = running_server_with_base_url
+    with urllib.request.urlopen(f"http://{host}:{port}/docs/__markserve_static__/style.css") as resp:
+        assert resp.status == 200
+
+
+def test_base_url_root_without_trailing_slash_redirects(running_server_with_base_url):
+    host, port = running_server_with_base_url
+    conn = http.client.HTTPConnection(host, port)
+    try:
+        conn.request("GET", "/docs")
+        resp = conn.getresponse()
+        assert resp.status == 301
+        assert resp.getheader("Location") == "/docs/"
+        resp.read()
+    finally:
+        conn.close()
+
+
+def test_base_url_rejects_paths_outside_prefix(running_server_with_base_url):
+    host, port = running_server_with_base_url
+    with pytest.raises(urllib.error.HTTPError) as exc_info:
+        urllib.request.urlopen(f"http://{host}:{port}/index.md")
+    assert exc_info.value.code == 404
