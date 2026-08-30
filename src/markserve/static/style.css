@@ -303,6 +303,23 @@ pre.highlight code {
   font-size: 0.88em;
 }
 
+.mermaid-wrapper {
+  position: relative;
+}
+
+.mermaid-popout {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  z-index: 1;
+  font-size: 0.82em;
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-pill);
+  padding: 0.25em 0.75em;
+  box-shadow: var(--shadow-soft);
+}
+
 pre.mermaid {
   background: var(--bg-soft);
   border-radius: var(--radius-lg);

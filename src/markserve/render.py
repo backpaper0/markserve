@@ -50,7 +50,13 @@ def _build_markdown_it() -> MarkdownIt:
         lang = info.split(maxsplit=1)[0] if info else ""
         if lang == "mermaid":
             escaped = html.escape(token.content)
-            return f'<pre class="mermaid">{escaped}</pre>\n'
+            return (
+                '<div class="mermaid-wrapper">'
+                f'<a class="mermaid-popout" href="#" data-mermaid-source="{escaped}">'
+                "⛶ 別ウィンドウで開く</a>"
+                f'<pre class="mermaid">{escaped}</pre>'
+                "</div>\n"
+            )
         return default_fence(tokens, idx, options, env)
 
     md.renderer.rules["fence"] = fence_with_mermaid

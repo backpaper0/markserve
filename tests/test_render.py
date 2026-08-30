@@ -25,6 +25,12 @@ def test_mermaid_fence_bypasses_highlight():
     assert "highlight" not in html_out
 
 
+def test_mermaid_fence_includes_popout_link_with_source():
+    html_out = render_markdown("```mermaid\ngraph TD; A-->B;\n```\n")
+    assert 'class="mermaid-popout"' in html_out
+    assert 'data-mermaid-source="graph TD; A--&gt;B;\n"' in html_out
+
+
 def test_split_front_matter_extracts_yaml():
     source = "---\ntitle: Hello\ntags:\n  - a\n  - b\n---\n# Body\n"
     data, body = split_front_matter(source)
