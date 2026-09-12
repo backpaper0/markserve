@@ -1,4 +1,4 @@
-"""MarkdownをHTMLへ変換する。Mermaidブロックとシンタックスハイライトに対応する。"""
+"""MarkdownをHTMLへ変換する。Mermaid/Vega/Vega-Liteブロックとシンタックスハイライト、画像の別タブ表示リンクに対応する。"""
 
 from __future__ import annotations
 
@@ -38,13 +38,17 @@ def _highlight(code: str, lang: str, _attrs: str) -> str:
     return f'<pre class="highlight"><code class="highlight{lang_class}">{body}</code></pre>\n'
 
 
+_VEGA_LANGS = ("vega", "vega-lite")
+
+
 def _build_markdown_it() -> MarkdownIt:
     md = MarkdownIt("commonmark", {"html": True, "highlight": _highlight})
     md.enable("table")
 
     default_fence = md.renderer.rules.get("fence") or md.renderer.fence
+    default_image = md.renderer.rules.get("image") or md.renderer.image
 
-    def fence_with_mermaid(tokens, idx, options, env):
+    def fence_with_diagrams(tokens, idx, options, env):
         token = tokens[idx]
         info = token.info.strip() if token.info else ""
         lang = info.split(maxsplit=1)[0] if info else ""
@@ -57,9 +61,32 @@ def _build_markdown_it() -> MarkdownIt:
                 f'<pre class="mermaid">{escaped}</pre>'
                 "</div>\n"
             )
+        if lang in _VEGA_LANGS:
+            escaped = html.escape(token.content)
+            return (
+                '<div class="vega-wrapper">'
+                f'<a class="vega-popout" href="#" data-vega-notation="{lang}" '
+                f'data-vega-source="{escaped}">'
+                "⛶ 別ウィンドウで開く</a>"
+                f'<div class="vega-diagram" data-vega-notation="{lang}">'
+                f'<pre class="vega-spec">{escaped}</pre>'
+                "</div>"
+                "</div>\n"
+            )
         return default_fence(tokens, idx, options, env)
 
-    md.renderer.rules["fence"] = fence_with_mermaid
+    md.renderer.rules["fence"] = fence_with_diagrams
+
+    def image_with_popout(tokens, idx, options, env):
+        rendered = default_image(tokens, idx, options, env)
+        src = tokens[idx].attrGet("src") or ""
+        return (
+            f'<a class="image-popout" href="{html.escape(src)}" '
+            f'target="_blank" rel="noopener">{rendered}</a>'
+        )
+
+    md.renderer.rules["image"] = image_with_popout
+
     return md
 
 

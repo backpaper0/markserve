@@ -47,6 +47,9 @@
     </main>
   </div>
 </div>
+<script defer src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
 <script type="module">
   import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
   mermaid.initialize({ startOnLoad: true, theme: "neutral" });
@@ -63,12 +66,13 @@
     })[c]);
   }
 
-  document.querySelectorAll(".mermaid-popout").forEach((link) => {
-    link.addEventListener("click", (event) => {
-      event.preventDefault();
-      const source = link.dataset.mermaidSource;
-      const styleUrl = new URL(`${BASE_URL}/__markserve_static__/style.css`, location.href).href;
-      const popoutHtml = `<!doctype html>
+  function escapeForInlineScript(text) {
+    return text.replace(/<\/(script)/gi, "<\\/$1");
+  }
+
+  function openPopoutWindow(bodyHtml) {
+    const styleUrl = new URL(`${BASE_URL}/__markserve_static__/style.css`, location.href).href;
+    const popoutHtml = `<!doctype html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -78,20 +82,65 @@
 <style>
   body { padding: 1rem; }
   pre.mermaid svg { max-width: none !important; width: 100% !important; height: auto !important; }
+  .vega-diagram { justify-content: center; }
 </style>
 </head>
 <body>
-<pre class="mermaid">${escapeHtml(source)}</pre>
+${bodyHtml}
+</body>
+</html>`;
+    const blob = new Blob([popoutHtml], { type: "text/html" });
+    window.open(URL.createObjectURL(blob), "_blank");
+  }
+
+  document.querySelectorAll(".mermaid-popout").forEach((link) => {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      const source = link.dataset.mermaidSource;
+      openPopoutWindow(`<pre class="mermaid">${escapeHtml(source)}</pre>
 <script type="module">
   import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
   mermaid.initialize({ startOnLoad: true, theme: "neutral" });
-<\/script>
-</body>
-</html>`;
-      const blob = new Blob([popoutHtml], { type: "text/html" });
-      window.open(URL.createObjectURL(blob), "_blank");
+<\/script>`);
     });
   });
+
+  document.querySelectorAll(".vega-popout").forEach((link) => {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      const source = link.dataset.vegaSource;
+      const notation = link.dataset.vegaNotation;
+      openPopoutWindow(`<div id="vega-popout-target" class="vega-diagram"></div>
+<script src="https://cdn.jsdelivr.net/npm/vega@5"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6"><\/script>
+<script>
+  vegaEmbed("#vega-popout-target", ${escapeForInlineScript(source)}, { mode: "${notation}", actions: false });
+<\/script>`);
+    });
+  });
+
+  function renderVegaDiagrams() {
+    document.querySelectorAll(".vega-diagram").forEach((el) => {
+      const specEl = el.querySelector(".vega-spec");
+      if (!specEl) {
+        return;
+      }
+      const notation = el.dataset.vegaNotation;
+      let spec;
+      try {
+        spec = JSON.parse(specEl.textContent);
+      } catch (err) {
+        console.error("markserve: invalid Vega/Vega-Lite spec", err);
+        return;
+      }
+      el.innerHTML = "";
+      window.vegaEmbed(el, spec, { mode: notation, actions: false }).catch((err) => {
+        console.error("markserve: failed to render Vega/Vega-Lite diagram", err);
+      });
+    });
+  }
+  renderVegaDiagrams();
 </script>
 </body>
 </html>

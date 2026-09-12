@@ -303,11 +303,13 @@ pre.highlight code {
   font-size: 0.88em;
 }
 
-.mermaid-wrapper {
+.mermaid-wrapper,
+.vega-wrapper {
   position: relative;
 }
 
-.mermaid-popout {
+.mermaid-popout,
+.vega-popout {
   position: absolute;
   top: 0.6rem;
   right: 0.6rem;
@@ -320,7 +322,8 @@ pre.highlight code {
   box-shadow: var(--shadow-soft);
 }
 
-pre.mermaid {
+pre.mermaid,
+.vega-diagram {
   background: var(--bg-soft);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
@@ -328,6 +331,21 @@ pre.mermaid {
   display: flex;
   justify-content: center;
   overflow-x: auto;
+}
+
+.vega-diagram pre.vega-spec {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.vega-diagram .vega-embed {
+  max-width: 100%;
+}
+
+.image-popout {
+  display: inline-block;
+  cursor: zoom-in;
 }
 
 .markdown-body table {

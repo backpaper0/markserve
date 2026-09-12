@@ -31,6 +31,30 @@ def test_mermaid_fence_includes_popout_link_with_source():
     assert 'data-mermaid-source="graph TD; A--&gt;B;\n"' in html_out
 
 
+def test_vega_fence_bypasses_highlight():
+    html_out = render_markdown('```vega\n{"a": 1}\n```\n')
+    assert 'class="vega-diagram" data-vega-notation="vega"' in html_out
+    assert "highlight" not in html_out
+
+
+def test_vega_lite_fence_includes_popout_link_with_source():
+    html_out = render_markdown('```vega-lite\n{"a": 1}\n```\n')
+    assert 'class="vega-popout"' in html_out
+    assert 'data-vega-notation="vega-lite"' in html_out
+    assert 'data-vega-source="{&quot;a&quot;: 1}\n"' in html_out
+
+
+def test_image_is_wrapped_in_popout_link():
+    html_out = render_markdown("![alt](img.png)\n")
+    assert '<a class="image-popout" href="img.png" target="_blank" rel="noopener">' in html_out
+    assert '<img src="img.png" alt="alt" />' in html_out
+
+
+def test_image_popout_link_escapes_src():
+    html_out = render_markdown("![alt](img.png?a=1&b=2)\n")
+    assert 'href="img.png?a=1&amp;b=2"' in html_out
+
+
 def test_split_front_matter_extracts_yaml():
     source = "---\ntitle: Hello\ntags:\n  - a\n  - b\n---\n# Body\n"
     data, body = split_front_matter(source)
