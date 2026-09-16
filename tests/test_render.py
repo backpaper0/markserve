@@ -31,10 +31,18 @@ def test_mermaid_fence_includes_popout_link_with_source():
     assert 'data-mermaid-source="graph TD; A--&gt;B;\n"' in html_out
 
 
-def test_vega_fence_bypasses_highlight():
+def test_mermaid_fence_includes_source_toggle():
+    html_out = render_markdown("```mermaid\ngraph TD; A-->B;\n```\n")
+    assert '<details class="diagram-source">' in html_out
+    assert "<summary>ソースを表示</summary>" in html_out
+    assert 'class="diagram-source__copy"' in html_out
+    assert '<pre class="diagram-source__code">graph TD; A--&gt;B;\n</pre>' in html_out
+
+
+def test_vega_diagram_bypasses_highlight():
     html_out = render_markdown('```vega\n{"a": 1}\n```\n')
     assert 'class="vega-diagram" data-vega-notation="vega"' in html_out
-    assert "highlight" not in html_out
+    assert '<pre class="vega-spec">{&quot;a&quot;: 1}\n</pre>' in html_out
 
 
 def test_vega_lite_fence_includes_popout_link_with_source():
@@ -42,6 +50,15 @@ def test_vega_lite_fence_includes_popout_link_with_source():
     assert 'class="vega-popout"' in html_out
     assert 'data-vega-notation="vega-lite"' in html_out
     assert 'data-vega-source="{&quot;a&quot;: 1}\n"' in html_out
+
+
+def test_vega_fence_includes_highlighted_source_toggle():
+    html_out = render_markdown('```vega\n{"a": 1}\n```\n')
+    assert '<details class="diagram-source">' in html_out
+    assert "<summary>ソースを表示</summary>" in html_out
+    assert 'class="diagram-source__copy"' in html_out
+    assert '<div class="diagram-source__code"><pre class="highlight">' in html_out
+    assert "<span" in html_out
 
 
 def test_image_is_wrapped_in_popout_link():

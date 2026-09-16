@@ -120,6 +120,20 @@ ${bodyHtml}
     });
   });
 
+  document.querySelectorAll(".diagram-source__copy").forEach((button) => {
+    const defaultLabel = button.textContent;
+    button.addEventListener("click", () => {
+      const code = button.nextElementSibling;
+      const text = code ? code.textContent : "";
+      navigator.clipboard.writeText(text).then(() => {
+        button.textContent = "コピーしました";
+        setTimeout(() => {
+          button.textContent = defaultLabel;
+        }, 1500);
+      });
+    });
+  });
+
   function renderVegaDiagrams() {
     document.querySelectorAll(".vega-diagram").forEach((el) => {
       const specEl = el.querySelector(".vega-spec");

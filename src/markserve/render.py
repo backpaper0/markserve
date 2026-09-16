@@ -41,6 +41,18 @@ def _highlight(code: str, lang: str, _attrs: str) -> str:
 _VEGA_LANGS = ("vega", "vega-lite")
 
 
+def _diagram_source_details(code_html: str) -> str:
+    return (
+        '<details class="diagram-source">'
+        "<summary>ソースを表示</summary>"
+        '<div class="diagram-source__body">'
+        '<button type="button" class="diagram-source__copy">📋 コピー</button>'
+        f"{code_html}"
+        "</div>"
+        "</details>"
+    )
+
+
 def _build_markdown_it() -> MarkdownIt:
     md = MarkdownIt("commonmark", {"html": True, "highlight": _highlight})
     md.enable("table")
@@ -54,24 +66,37 @@ def _build_markdown_it() -> MarkdownIt:
         lang = info.split(maxsplit=1)[0] if info else ""
         if lang == "mermaid":
             escaped = html.escape(token.content)
-            return (
-                '<div class="mermaid-wrapper">'
-                f'<a class="mermaid-popout" href="#" data-mermaid-source="{escaped}">'
-                "⛶ 別ウィンドウで開く</a>"
-                f'<pre class="mermaid">{escaped}</pre>'
-                "</div>\n"
+            source_details = _diagram_source_details(
+                f'<pre class="diagram-source__code">{escaped}</pre>'
+            )
+            return "".join(
+                (
+                    '<div class="mermaid-wrapper">',
+                    f'<a class="mermaid-popout" href="#" data-mermaid-source="{escaped}">',
+                    "⛶ 別ウィンドウで開く</a>",
+                    f'<pre class="mermaid">{escaped}</pre>',
+                    source_details,
+                    "</div>\n",
+                )
             )
         if lang in _VEGA_LANGS:
             escaped = html.escape(token.content)
-            return (
-                '<div class="vega-wrapper">'
-                f'<a class="vega-popout" href="#" data-vega-notation="{lang}" '
-                f'data-vega-source="{escaped}">'
-                "⛶ 別ウィンドウで開く</a>"
-                f'<div class="vega-diagram" data-vega-notation="{lang}">'
-                f'<pre class="vega-spec">{escaped}</pre>'
-                "</div>"
-                "</div>\n"
+            highlighted = _highlight(token.content, "json", "")
+            source_details = _diagram_source_details(
+                f'<div class="diagram-source__code">{highlighted}</div>'
+            )
+            return "".join(
+                (
+                    '<div class="vega-wrapper">',
+                    f'<a class="vega-popout" href="#" data-vega-notation="{lang}" '
+                    f'data-vega-source="{escaped}">',
+                    "⛶ 別ウィンドウで開く</a>",
+                    f'<div class="vega-diagram" data-vega-notation="{lang}">',
+                    f'<pre class="vega-spec">{escaped}</pre>',
+                    "</div>",
+                    source_details,
+                    "</div>\n",
+                )
             )
         return default_fence(tokens, idx, options, env)
 

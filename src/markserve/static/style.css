@@ -343,6 +343,58 @@ pre.mermaid,
   max-width: 100%;
 }
 
+.diagram-source {
+  margin-top: 0.6rem;
+}
+
+.diagram-source summary {
+  cursor: pointer;
+  font-size: 0.85em;
+  color: var(--text-muted);
+  padding: 0.2em 0;
+}
+
+.diagram-source summary:hover {
+  color: var(--text-main);
+}
+
+.diagram-source__body {
+  position: relative;
+  margin-top: 0.4rem;
+}
+
+.diagram-source__copy {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 1;
+  font-size: 0.78em;
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-pill);
+  padding: 0.2em 0.7em;
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+}
+
+.diagram-source__copy:hover {
+  background: var(--pastel-pink);
+}
+
+.diagram-source__code {
+  margin: 0;
+}
+
+pre.diagram-source__code {
+  background: var(--bg-code);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 1rem 1.2rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .image-popout {
   display: inline-block;
   cursor: zoom-in;
