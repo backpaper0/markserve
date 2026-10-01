@@ -15,6 +15,9 @@
   --radius-md: 10px;
   --radius-pill: 999px;
   --shadow-soft: 0 2px 10px rgba(120, 100, 160, 0.12);
+  --sidebar-width: 280px;
+  --layout-gap: 1.5rem;
+  --content-max-width: 980px;
 }
 
 * {
@@ -148,9 +151,9 @@ a:hover {
 .app-body {
   flex: 1;
   display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 1.5rem;
-  padding: 0 1.5rem 2.5rem;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  gap: var(--layout-gap);
+  padding: 0 var(--layout-gap) 2.5rem;
   align-items: start;
 }
 
@@ -236,10 +239,23 @@ a:hover {
 
 /* ---- markdown content ---- */
 
+/*
+ * 本文は画面の中心に揃える。.main の左右にある余白の差は（サイドバー + gap）なので、
+ * その半分だけ左に戻した位置が画面中心。余裕がなければサイドバーの右隣に寄せる。
+ */
 .markdown-body,
-.text-body {
-  max-width: 980px;
-  margin: 0 auto;
+.text-body,
+.image-body {
+  max-width: var(--content-max-width);
+  margin: 0 auto 0
+    max(
+      0px,
+      calc(
+        50% -
+          (var(--sidebar-width) + var(--layout-gap) + var(--content-max-width)) /
+          2
+      )
+    );
   padding: 0.5rem 0.5rem 3rem;
 }
 
@@ -473,9 +489,6 @@ pre.diagram-source__code {
 }
 
 .image-body {
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 0.5rem 0.5rem 3rem;
   text-align: center;
 }
 
@@ -540,5 +553,11 @@ pre.diagram-source__code {
 
   .sidebar {
     position: static;
+  }
+
+  .markdown-body,
+  .text-body,
+  .image-body {
+    margin: 0 auto;
   }
 }
