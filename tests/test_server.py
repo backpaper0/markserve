@@ -38,6 +38,15 @@ def test_markdown_preview(running_server):
         assert "<h1>Hello</h1>" in body
 
 
+def test_page_has_sidebar_toggle_button(running_server):
+    host, port = running_server
+    with urllib.request.urlopen(f"http://{host}:{port}/index.md") as resp:
+        body = resp.read().decode("utf-8")
+    assert 'class="sidebar-toggle"' in body
+    assert 'aria-controls="sidebar"' in body
+    assert 'id="sidebar"' in body
+
+
 def test_front_matter_rendered_as_table(running_server, tmp_path):
     (tmp_path / "with_fm.md").write_text(
         "---\ntitle: My Doc\ntags:\n  - a\n  - b\n---\n# Body\n",
