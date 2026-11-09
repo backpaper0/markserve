@@ -18,6 +18,12 @@
 uv tool install markserve
 ```
 
+[mise](https://mise.jdx.dev/) を使う場合は次のコマンドでもインストールできます。
+
+```sh
+mise use "pypi:git+https://github.com/backpaper0/markserve.git"
+```
+
 ## 使い方
 
 ```sh
